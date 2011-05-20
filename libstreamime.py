@@ -23,10 +23,20 @@ class Streamime(object):
         self.boundary = boundary
         self.stack = ["\r", "\n"]
         self.output = [] 
+        self.header = [] 
         self.boundary_match = "\r\n--%s\r\n" % boundary
         self.end_of_headers = "\r\n\r\n"
-        self.body = ''
         self.times_in_header = 0
+        self.last_header = ''
+        self.last_body = ''
+
+    def end_of_header(self):
+        self.last_header = ''.join(self.header)
+        self.header = []
+
+    def end_of_part(self):
+        self.last_body = self.get_body()
+        self.output = []
 
     def push(self, data):
         if self.stopped:
@@ -39,8 +49,12 @@ class Streamime(object):
                     if len(self.stack) == len(self.end_of_headers):
                         self.state = IN_DATA
                         self.stack = []
+                        self.end_of_header()
+                        self.header = []
                 else:
+                    self.header.extend(self.stack)
                     self.stack = []
+                    self.header.append(character)
             else:
                 if character == self.boundary_match[len(self.stack)]:
                     # might still be boundary
@@ -48,6 +62,7 @@ class Streamime(object):
                     if len(self.stack) == len(self.boundary_match):
                         self.state = IN_HEADERS
                         self.times_in_header += 1
+                        self.end_of_part()
                         if self.times_in_header > self.stop_after:
                             self.stopped = True
                             return

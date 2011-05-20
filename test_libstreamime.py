@@ -19,7 +19,7 @@ class TestSimple(unittest.TestCase):
         streamime = Streamime(self.boundary)
         streamime.stop_after = 1
         streamime.push(self.f.read())
-        self.assertEqual("This is a straightforward test\ndocument which spans several lines.\n", streamime.get_body())
+        self.assertEqual("This is a straightforward test\ndocument which spans several lines.\n", streamime.last_body)
 
     def test_rigged_body_test_partial(self):
         streamime = Streamime(self.boundary)
